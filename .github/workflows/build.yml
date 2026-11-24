@@ -39,21 +39,9 @@ jobs:
           print('patched')
           "
 
-      - name: Get Geode release assets
-        run: |
-          curl -s https://api.github.com/repos/geode-sdk/geode/releases/latest | python3 -c "
-          import sys, json
-          data = json.load(sys.stdin)
-          print('TAG:', data['tag_name'])
-          for a in data['assets']:
-              print('ASSET:', a['name'])
-          "
-
       - name: Install Geode binaries
         run: |
-          TAG=$(curl -s https://api.github.com/repos/geode-sdk/geode/releases/latest | python3 -c "import sys,json; print(json.load(sys.stdin)['tag_name'])")
-          echo "Using tag $TAG"
-          curl -sL "https://github.com/geode-sdk/geode/releases/download/$TAG/geode-$TAG-android64.zip" -o geode-android.zip
+          curl -sL "https://github.com/geode-sdk/geode/releases/download/v6.0.0/geode-v6.0.0-android64.zip" -o geode-android.zip
           unzip geode-android.zip -d geode-bins
           mkdir -p geode-sdk/bin/android64
           cp geode-bins/* geode-sdk/bin/android64/ 2>/dev/null || true
