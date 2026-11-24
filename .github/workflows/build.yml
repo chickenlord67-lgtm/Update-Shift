@@ -6,67 +6,81 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-android:
-    name: Android
-    runs-on: ubuntu-latest
+  build:
+    strategy:
+      matrix:
+        config:
+          - name: Android
+            os: ubuntu-latest
+            target: Android64
+          - name: Windows
+            os: windows-latest
+            target: Win64
+
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake ninja-build
-
-      - uses: nttld/setup-ndk@v1
-        id: ndk
+      - name: Setup NDK
+        if: matrix.config.target == 'Android64'
+        uses: nttld/setup-ndk@v1
         with:
           ndk-version: r26b
-          add-to-path: true
 
-      - name: Clone Geode SDK
-        run: |
-          git clone https://github.com/geode-sdk/geode --depth 1 --branch main geode-sdk
-          cd geode-sdk && git submodule update --init --recursive
+      - name: Download Geode CLI
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: geode-sdk/cli
+          latest: true
+          fileName: "*-linux.zip"
+          extract: true
+        if: matrix.config.target == 'Android64'
 
-      - name: Configure Android
+      - name: Download Geode CLI Windows
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: geode-sdk/cli
+          latest: true
+          fileName: "*-win.zip"
+          extract: true
+        if: matrix.config.target == 'Win64'
+
+      - name: Setup Geode SDK
         run: |
-          cmake -B build -G Ninja \
-            -DCMAKE_TOOLCHAIN_FILE=${{ steps.ndk.outputs.ndk-path }}/build/cmake/android.toolchain.cmake \
+          git clone https://github.com/geode-sdk/geode --depth 1 geode-sdk
+          cd geode-sdk
+          git submodule update --init --recursive
+
+      - name: Configure & Build Android
+        if: matrix.config.target == 'Android64'
+        run: |
+          cmake -B build \
+            -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake \
             -DANDROID_ABI=arm64-v8a \
             -DANDROID_PLATFORM=android-23 \
             -DCMAKE_BUILD_TYPE=Release \
-            -DGEODE_TARGET_PLATFORM=Android64
+            -DGEODE_TARGET_PLATFORM=Android64 \
+            -DGEODE_SDK=$PWD/geode-sdk
+          cmake --build build -j4
 
-      - name: Build
-        run: cmake --build build -j4
+      - name: Configure & Build Windows
+        if: matrix.config.target == 'Win64'
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DGEODE_TARGET_PLATFORM=Win64 -DGEODE_SDK=$pwd/geode-sdk
+          cmake --build build --config Release -j4
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload Android
+        if: matrix.config.target == 'Android64'
+        uses: actions/upload-artifact@v4
         with:
           name: update-shift-android
           path: build/*.geode
 
-  build-windows:
-    name: Windows
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Clone Geode SDK
-        run: |
-          git clone https://github.com/geode-sdk/geode --depth 1 --branch main geode-sdk
-          cd geode-sdk
-          git submodule update --init --recursive
-
-      - name: Configure Windows
-        run: |
-          cmake -B build `
-            -DCMAKE_BUILD_TYPE=Release `
-            -DGEODE_TARGET_PLATFORM=Win64
-
-      - name: Build
-        run: cmake --build build --config Release -j4
-
-      - uses: actions/upload-artifact@v4
+      - name: Upload Windows
+        if: matrix.config.target == 'Win64'
+        uses: actions/upload-artifact@v4
         with:
           name: update-shift-windows
           path: build/Release/*.geode
