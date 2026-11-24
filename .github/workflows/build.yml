@@ -12,8 +12,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-            - name: Show line 331
-        run: sed -n '325,335p' geode-sdk/CMakeLists.txt
+      - name: Install dependencies
+        run: sudo apt-get install -y cmake ninja-build
 
       - uses: nttld/setup-ndk@v1
         id: ndk
@@ -25,6 +25,9 @@ jobs:
         run: |
           git clone https://github.com/geode-sdk/geode --depth 1 geode-sdk
           cd geode-sdk && git submodule update --init --recursive
+
+      - name: Show line 331
+        run: sed -n '325,335p' geode-sdk/CMakeLists.txt
 
       - name: Patch clang version check
         run: |
