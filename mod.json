@@ -1,13 +1,12 @@
 {
     "geode": "3.0.0",
     "gd": {
-        "android": "2.206",
-        "win": "2.206"
+        "android": "2.206"
     },
-    "id": "smite.update-shift",
+    "id": "sussy.update-shift",
     "name": "Update Shift",
     "version": "v1.0.0",
-    "developer": "smite",
+    "developer": "sussy",
     "description": "Restrict editor to a specific GD version",
     "binary": "update-shift"
 }
