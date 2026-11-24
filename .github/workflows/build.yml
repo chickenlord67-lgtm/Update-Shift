@@ -16,18 +16,30 @@ jobs:
         with:
           ndk-version: r26b
 
-      - name: Setup Geode SDK
-        uses: geode-sdk/build-geode-mod/setup@main
+      - name: Clone Geode SDK
+        run: |
+          git clone https://github.com/geode-sdk/geode --depth 1 geode-sdk
+          cd geode-sdk
+          git submodule update --init --recursive
+
+      - name: Configure
+        run: |
+          export ANDROID_NDK=$ANDROID_NDK_ROOT
+          cmake -B build \
+            -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
+            -DANDROID_ABI=arm64-v8a \
+            -DANDROID_PLATFORM=android-23 \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DGEODE_TARGET_PLATFORM=Android \
+            -DGEODE_SDK=$(pwd)/geode-sdk
 
       - name: Build
-        uses: geode-sdk/build-geode-mod@main
-        with:
-          target: Android64
+        run: cmake --build build --config Release -j4
 
       - uses: actions/upload-artifact@v4
         with:
           name: update-shift-android
-          path: ${{ steps.build.outputs.build-output }}
+          path: build/*.geode
 
   build-windows:
     name: Windows
@@ -35,16 +47,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Geode SDK
-        uses: geode-sdk/build-geode-mod/setup@main
+      - name: Clone Geode SDK
+        run: |
+          git clone https://github.com/geode-sdk/geode --depth 1 geode-sdk
+          cd geode-sdk
+          git submodule update --init --recursive
+
+      - name: Configure
+        run: |
+          cmake -B build `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DGEODE_TARGET_PLATFORM=Win64 `
+            -DGEODE_SDK=$pwd/geode-sdk
 
       - name: Build
-        id: build
-        uses: geode-sdk/build-geode-mod@main
-        with:
-          target: Win64
+        run: cmake --build build --config Release -j4
 
       - uses: actions/upload-artifact@v4
         with:
           name: update-shift-windows
-          path: ${{ steps.build.outputs.build-output }}
+          path: build/Release/*.geode
