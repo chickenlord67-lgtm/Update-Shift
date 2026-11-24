@@ -37,9 +37,8 @@ jobs:
           f = open('geode-sdk/CMakeLists.txt', 'w')
           f.write(content)
           f.close()
-          print('patched CMakeLists.txt')
+          print('patched')
           "
-          grep -n "CLANG_VERSION_MAJOR" geode-sdk/CMakeLists.txt
 
       - name: Configure
         run: |
