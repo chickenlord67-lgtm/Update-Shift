@@ -12,8 +12,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: sudo apt-get install -y cmake ninja-build
+            - name: Show line 331
+        run: sed -n '325,335p' geode-sdk/CMakeLists.txt
 
       - uses: nttld/setup-ndk@v1
         id: ndk
