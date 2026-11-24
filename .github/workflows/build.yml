@@ -11,54 +11,40 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - uses: nttld/setup-ndk@v1
         with:
           ndk-version: r26b
 
-      - name: Clone Geode SDK
-        run: git clone https://github.com/geode-sdk/geode geode-sdk --recurse-submodules --depth 1
-
-      - name: Configure
-        run: |
-          cmake -B build \
-            -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
-            -DANDROID_ABI=arm64-v8a \
-            -DANDROID_PLATFORM=android-23 \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DGEODE_TARGET_PLATFORM=Android
+      - name: Setup Geode SDK
+        uses: geode-sdk/build-geode-mod/setup@main
 
       - name: Build
-        run: cmake --build build --config Release
+        uses: geode-sdk/build-geode-mod@main
+        with:
+          target: Android64
 
       - uses: actions/upload-artifact@v4
         with:
           name: update-shift-android
-          path: build/*.geode
+          path: ${{ steps.build.outputs.build-output }}
 
   build-windows:
     name: Windows
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
-      - name: Clone Geode SDK
-        run: git clone https://github.com/geode-sdk/geode geode-sdk --recurse-submodules --depth 1
-
-      - name: Configure
-        run: |
-          cmake -B build `
-            -DCMAKE_BUILD_TYPE=Release `
-            -DGEODE_TARGET_PLATFORM=Win32
+      - name: Setup Geode SDK
+        uses: geode-sdk/build-geode-mod/setup@main
 
       - name: Build
-        run: cmake --build build --config Release
+        id: build
+        uses: geode-sdk/build-geode-mod@main
+        with:
+          target: Win64
 
       - uses: actions/upload-artifact@v4
         with:
           name: update-shift-windows
-          path: build/Release/*.geode
+          path: ${{ steps.build.outputs.build-output }}
