@@ -26,17 +26,13 @@ jobs:
           git clone https://github.com/geode-sdk/geode --depth 1 geode-sdk
           cd geode-sdk && git submodule update --init --recursive
 
-      - name: Show line 331
-        run: sed -n '325,335p' geode-sdk/CMakeLists.txt
-
       - name: Patch clang version check
         run: |
           python3 -c "
-          import re
           f = open('geode-sdk/CMakeLists.txt', 'r')
           content = f.read()
           f.close()
-          content = re.sub(r'if\s*\(\s*CLANG_VERSION_MAJOR\s+LESS\s+19\s*\)', 'if(FALSE)', content)
+          content = content.replace('if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS \"19.0\")', 'if (FALSE)')
           f = open('geode-sdk/CMakeLists.txt', 'w')
           f.write(content)
           f.close()
