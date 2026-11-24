@@ -26,19 +26,22 @@ jobs:
           git clone https://github.com/geode-sdk/geode --depth 1 geode-sdk
           cd geode-sdk && git submodule update --init --recursive
 
+      - name: Patch Geode clang check
+        run: |
+          sed -i 's/if(CLANG_VERSION_MAJOR LESS 19)/if(FALSE)/g' geode-sdk/cmake/Platform.cmake
+          sed -i 's/if(CLANG_VERSION_MAJOR LESS 19)/if(FALSE)/g' geode-sdk/CMakeLists.txt
+
       - name: Configure
         run: |
           NDK=${{ steps.ndk.outputs.ndk-path }}
-          CLANG=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/clang
-          CLANGXX=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++
           cmake -B build -G Ninja \
             -DCMAKE_TOOLCHAIN_FILE=$NDK/build/cmake/android.toolchain.cmake \
             -DANDROID_ABI=arm64-v8a \
             -DANDROID_PLATFORM=android-23 \
             -DCMAKE_BUILD_TYPE=Release \
             -DGEODE_TARGET_PLATFORM=Android64 \
-            -DCMAKE_C_COMPILER=$CLANG \
-            -DCMAKE_CXX_COMPILER=$CLANGXX \
+            -DCMAKE_C_COMPILER=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/clang \
+            -DCMAKE_CXX_COMPILER=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++ \
             -DGEODE_SDK=$PWD/geode-sdk
 
       - name: Build
