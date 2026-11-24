@@ -14,9 +14,15 @@ jobs:
 
       - name: Install Clang 19
         run: |
-          sudo apt-get install -y clang-19 lld-19 cmake ninja-build
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 19 all
           sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100
           sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 100
+          clang --version
+
+      - name: Install dependencies
+        run: sudo apt-get install -y cmake ninja-build
 
       - uses: nttld/setup-ndk@v1
         id: ndk
@@ -37,8 +43,8 @@ jobs:
             -DANDROID_PLATFORM=android-23 \
             -DCMAKE_BUILD_TYPE=Release \
             -DGEODE_TARGET_PLATFORM=Android64 \
-            -DCMAKE_C_COMPILER=clang-19 \
-            -DCMAKE_CXX_COMPILER=clang++-19 \
+            -DCMAKE_C_COMPILER=/usr/bin/clang-19 \
+            -DCMAKE_CXX_COMPILER=/usr/bin/clang++-19 \
             -DGEODE_SDK=$PWD/geode-sdk
 
       - name: Build
@@ -60,6 +66,16 @@ jobs:
           git clone https://github.com/geode-sdk/geode --depth 1 geode-sdk
           cd geode-sdk
           git submodule update --init --recursive
+
+      - name: Download Geode CLI
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/geode-sdk/cli/releases/latest/download/geode-cli-windows.zip" -OutFile "geode-cli.zip"
+          Expand-Archive "geode-cli.zip" -DestinationPath "geode-cli"
+          echo "$pwd/geode-cli" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Install Geode Binaries
+        run: |
+          geode sdk install-binaries
 
       - name: Configure
         run: |
