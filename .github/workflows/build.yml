@@ -19,7 +19,6 @@ jobs:
           sudo ./llvm.sh 19 all
           sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100
           sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 100
-          clang --version
 
       - name: Install dependencies
         run: sudo apt-get install -y cmake ninja-build
@@ -54,42 +53,3 @@ jobs:
         with:
           name: update-shift-android
           path: build/*.geode
-
-  build-windows:
-    name: Windows
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Clone Geode SDK
-        run: |
-          git clone https://github.com/geode-sdk/geode --depth 1 geode-sdk
-          cd geode-sdk
-          git submodule update --init --recursive
-
-      - name: Download Geode CLI
-        run: |
-          Invoke-WebRequest -Uri "https://github.com/geode-sdk/cli/releases/latest/download/geode-cli-windows.zip" -OutFile "geode-cli.zip"
-          Expand-Archive "geode-cli.zip" -DestinationPath "geode-cli"
-          echo "$pwd/geode-cli" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
-      - name: Install Geode Binaries
-        run: |
-          geode sdk install-binaries
-
-      - name: Configure
-        run: |
-          cmake -B build `
-            -DCMAKE_BUILD_TYPE=Release `
-            -DGEODE_TARGET_PLATFORM=Win64 `
-            -DCMAKE_C_COMPILER="C:/Program Files/LLVM/bin/clang.exe" `
-            -DCMAKE_CXX_COMPILER="C:/Program Files/LLVM/bin/clang++.exe" `
-            -DGEODE_SDK=$pwd/geode-sdk
-
-      - name: Build
-        run: cmake --build build --config Release -j4
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: update-shift-windows
-          path: build/Release/*.geode
